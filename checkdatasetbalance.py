@@ -32,7 +32,7 @@ other = 0
 single_counter = Counter(single_fractures)
 multi_counter = Counter(multi_fractures)
 unbroken_counter = Counter(unbroken)
-path = '/Users/jenni/Desktop/Diss_Work/folder_structure/supervisely/wrist/ann'
+path = ''
 def gather_lists(path):
     for filename in glob.glob(os.path.join(path, '*.json')): #only process .JSON files in folder.      
         with open(filename, encoding='utf-8', mode='r') as currentFile:
@@ -163,6 +163,7 @@ def show_fracture_totals():
     for (value, count) in multi_counter.most_common():
         print(value,count)
 def main():
+    # path = {directory for the annotation files in json format}
     gather_lists(path)
     total_fracture_types_single()
     show_balances()
