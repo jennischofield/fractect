@@ -68,39 +68,46 @@ def adjust_img_contrast(filename,directory):
     tf.keras.utils.save_img(final_path, contrast_img)
 #@title augment
 def augment_data(directory, count_to_match):
-    starting_val = len(os.listdir(directory))-1
+    starting_val = len(os.listdir(directory + 'Augmented\\')) + len(os.listdir(directory)) -1
     #Subtract one to account for the Augmented Folder
     for file in os.listdir(directory):
-        aug_method = random.randrange(0,7)
-        if aug_method == 0:
-            flip_image_horizontal(file, directory)
-        elif aug_method == 1:
-            flip_image_vertical(file,directory)
-        elif aug_method == 2:
-            rotate_image(file, directory)
-        elif aug_method == 3:
-            zoom_image(file, directory)
-        elif aug_method == 4:
-            adjust_img_saturation(file, directory)
-        elif aug_method == 5:
-            adjust_img_hue(file,directory)
-        elif aug_method == 6:
-            adjust_img_contrast(file, directory)
-        starting_val += 1
-        if starting_val >= count_to_match:
-            break
+        if os.path.isfile(directory + file):
+            aug_method = random.randrange(0,7)
+            if aug_method == 0:
+                flip_image_horizontal(file, directory)
+            elif aug_method == 1:
+                flip_image_vertical(file,directory)
+            elif aug_method == 2:
+                rotate_image(file, directory)
+            elif aug_method == 3:
+                zoom_image(file, directory)
+            elif aug_method == 4:
+                adjust_img_saturation(file, directory)
+            elif aug_method == 5:
+                adjust_img_hue(file,directory)
+            elif aug_method == 6:
+                adjust_img_contrast(file, directory)
+            starting_val += 1
+            if starting_val >= count_to_match:
+                break
+        else:
+            print(f"Not a file:{file}")
+
     #verify counts
-    subfolder = directory + "\\Augmented\\"
-    if (len(os.listdir(directory))-1) + len(os.listdir(directory + "\\Augmented\\")) == count_to_match:
+    subfolder = directory + "Augmented\\"
+    if (len(os.listdir(directory))-1) + len(os.listdir(directory + "Augmented\\")) == count_to_match:
         print(f"Count verified, total of {count_to_match} images with {len(os.listdir(directory))-1} original and {len(os.listdir(subfolder))} augmented.")
     else:
         print(f"Incorrect amount. Meant to have {count_to_match}, found {(len(os.listdir(directory))-1) + len(os.listdir(subfolder))} .")
 def convert_images_to_jpg(target_dir,jpg_dir):
     for filename in os.listdir(target_dir):
         if filename[30] == '_':
-            img = cv2.imread(target_dir + filename)
-            savestring = jpg_dir + filename[:-3] + "jpg"
-            cv2.imwrite(savestring, img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+            try:
+                img = cv2.imread(target_dir + filename)
+                savestring = jpg_dir + filename[:-3] + "jpg"
+                cv2.imwrite(savestring, img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+            except Exception as e:
+                print(e, filename)
         elif filename[30] == '.':
             jpg_file_path = jpg_dir
             image = Image.fromarray((np.array(Image.open(target_dir + filename))>>8).astype(np.uint8)).convert('RGB')
@@ -109,11 +116,11 @@ def convert_images_to_jpg(target_dir,jpg_dir):
             print("error" + filename)
     pass
 def main():
-    path = '{directory containing files to augment}'
+    path = 'C:\\Users\\jenni\\Desktop\\Diss_Work\\Unbroken\\'
     # the count should be the number of files in the other class to match
     # In my case, I matched the 8689 of single fracture breaks
-    count_to_match = 0
-    augment_data(path, count_to_match)
+    #count_to_match = 14158
+    #augment_data(path, count_to_match)
 
     # Now before passing images to the neural networks, they have to 
     # be converted to JPGs for pytorch to handle (since it uses the PIL library)
@@ -123,12 +130,12 @@ def main():
     # JPG easier than the original images. 
     # convert_images_to_jpg switches on if there's an added chunk to the filename
     # as there would be for augmented images.
-    target_fractured = '{path to the directory holding the fractured images}'
-    target_unbroken = '{path to the directory holding the unbroken images}'
-    jpg_dir_fractured = '{path to the directory to hold JPG fractured images}'
-    jpg_dir_unbroken = '{path to the directory to hold JPG unbroken images}'
-    convert_images_to_jpg(target_dir=target_fractured, jpg_dir=jpg_dir_fractured)
+    target_fractured = 'C:\\Users\\jenni\\Desktop\\Diss_Work\\Fractured_w_multi\\'
+    target_unbroken = 'C:\\Users\\jenni\\Desktop\\Diss_Work\\Unbroken_w_multi\\'
+    jpg_dir_fractured = 'C:\\Users\\jenni\\Desktop\\Diss_Work\\jpgwmulti\\Fractured\\'
+    jpg_dir_unbroken = 'C:\\Users\\jenni\\Desktop\\Diss_Work\\jpgwmulti\\NotFractured\\'
+    #convert_images_to_jpg(target_dir=target_fractured, jpg_dir=jpg_dir_fractured)
     convert_images_to_jpg(target_dir=target_unbroken, jpg_dir=jpg_dir_unbroken)
-    
+
 if __name__ == "__main__":
     main()
