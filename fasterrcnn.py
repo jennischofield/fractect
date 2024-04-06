@@ -11,6 +11,7 @@ import torchvision
 from albumentations.pytorch import ToTensorV2
 from torch import nn
 from torch.utils.data import DataLoader
+from torchmetrics.detection import IntersectionOverUnion
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from tqdm.auto import tqdm
 
@@ -23,12 +24,12 @@ NUM_EPOCHS = 50  # number of epochs to train for
 DEVICE = torch.device(
     'cuda') if torch.cuda.is_available() else torch.device('cpu')
 # training images and XML files directory
-TRAIN_DIR = '/content/Faster_RCNN/train'
+TRAIN_DIR = 'C:\\Users\\jenni\\Desktop\\Diss_Work\\Faster_RCNN\\train'
 # validation images and XML files directory
-VALID_DIR = '/content/Faster_RCNN/val'
+VALID_DIR = 'C:\\Users\\jenni\\Desktop\\Diss_Work\\Faster_RCNN\\val'
 
 # test images for final case
-TEST_DIR = '/content/Faster_RCNN/test'
+TEST_DIR = 'C:\\Users\\jenni\\Desktop\\Diss_Work\\Faster_RCNN\\test'
 # classes: 0 index is reserved for background
 CLASSES = [
     'background', 'boneanomaly', 'bonelesion', 'foreignbody', 'fracture', 'metal',
@@ -109,9 +110,13 @@ def load_faster_rcnn_model(input_model_path):
     model.roi_heads.box_predictor = FastRCNNPredictor(
         in_features, len(CLASSES))
     model = nn.DataParallel(model)
+
     if input_model_path is not None:
-        model = model.load_state_dict(torch.load(input_model_path))
-    model.to(DEVICE)
+        model.load_state_dict(torch.load(input_model_path))
+        model.to(DEVICE)
+        model.eval()
+    else:
+        model.to(DEVICE)
     return model
 # function for running training iterations
 
@@ -241,22 +246,34 @@ def train_test_rcnn(model, train_rcnn_loader, test_rcnn_loader):
         plt.close('all')
 
 
+def get_iou_for_num_batch_in_loader(model, data_loader):
+    target = [data_loader.dataset[0][1]]
+    val = torch.unsqueeze(data_loader.dataset[0][0], 0)
+    res = model(val)
+    res = [{k: v.to('cpu') for k, v in t.items()} for t in res]
+    metric = IntersectionOverUnion(class_metrics=True)
+    print(target)
+    print(res)
+    print(metric(target, res))
+    # img = target.
+    # output = model(data_loader[0])
+
+
 def run_tests(model, test_images, detection_threshold):
-    for i in range(10):
+    path = "C:/Users/jenni/Desktop/Diss_Work/fractect/test_predictions"
+    for img in enumerate(test_images):
         # get the image file name for saving output later on
-        _, fe = os.path.splitext(test_images[i])
+        _, fe = os.path.splitext(img)
         if fe == ".xml":
             print("xml file")
         else:
-            image_name = test_images[i].split('/')[-1].split('.')[0]
-            print(test_images[i])
-            image = cv2.imread(test_images[i])
+            image_name = img.split('\\')[-1]
+            image = cv2.imread(img)
             orig_image = image.copy()
-            # BGR to RGB
+            # BGR to RGBe
             image = cv2.cvtColor(
                 orig_image, cv2.COLOR_BGR2RGB).astype(np.float32)
             # make the pixel range between 0 and 1
-            # image /= 255.0
             # bring color channels to front
             image = np.transpose(image, (2, 0, 1)).astype(float)
             # convert to tensor
@@ -265,7 +282,6 @@ def run_tests(model, test_images, detection_threshold):
             image = torch.unsqueeze(image, 0)
             with torch.no_grad():
                 outputs = model(image)
-
             # load all detection to CPU for further operations
             outputs = [{k: v.to('cpu') for k, v in t.items()} for t in outputs]
             # carry further only if there are detected boxes
@@ -290,10 +306,10 @@ def run_tests(model, test_images, detection_threshold):
                                 (int(box[0]), int(box[1]-5)),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0),
                                 2, lineType=cv2.LINE_AA)
-                cv2.imshow(orig_image)
-                cv2.imwrite(
-                    f"../test_predictions/{image_name}.jpg", orig_image,)
-        print(f"Image {i+1} done...")
+
+                print(image_name)
+                cv2.imwrite(os.path.join(path, image_name), orig_image)
+        print(f"Image {test_images.index(img)} done...")
         print('-'*50)
     print('TEST PREDICTIONS COMPLETE')
 
@@ -306,7 +322,8 @@ def run():
         VALID_DIR, RESIZE_TO, RESIZE_TO, CLASSES, get_valid_transform())
     test_rcnn_dataset = FracturedDataset(
         TEST_DIR, RESIZE_TO, RESIZE_TO, CLASSES, get_valid_transform())
-
+    test_rcnn_subset = FracturedDataset("C:\\Users\\jenni\\Desktop\\Diss_Work\\Faster_RCNN\\test_subset",
+                                        RESIZE_TO, RESIZE_TO, CLASSES, get_valid_transform())
     train_rcnn_loader = DataLoader(
         train_rcnn_dataset,
         batch_size=BATCH_SIZE,
@@ -328,10 +345,30 @@ def run():
         num_workers=0,
         collate_fn=collate_fn
     )
-    test_images = glob.glob(f"{VALID_DIR}/*")
+    test_rcnn_subset_loader = DataLoader(test_rcnn_subset, batch_size=BATCH_SIZE,
+                                         shuffle=False,
+                                         num_workers=4,
+                                         collate_fn=collate_fn)
+    TEST_IMG_DIR = "test_images"
+    test_images = glob.glob(f"{TEST_IMG_DIR}/*")
     print(f"Test instances: {len(test_images)}")
     # classes: 0 index is reserved for background
 
     # define the detection threshold...
     # ... any detection having score below this will be discarded
     detection_threshold = 0.70
+
+    model = load_faster_rcnn_model(
+        "C:\\Users\\jenni\\Desktop\\Diss_Work\\fractect\\FasterRCNNModelFinal.pth")
+    run_tests(model, test_images, detection_threshold=detection_threshold)
+    # evaluate(model, test_rcnn_subset_loader, DEVICE)
+    get_iou_for_num_batch_in_loader(model, test_rcnn_subset_loader)
+
+
+def main():
+    print(DEVICE)
+    run()
+
+
+if __name__ == "__main__":
+    main()

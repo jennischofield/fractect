@@ -87,7 +87,7 @@ class FracturedDataset(torch.utils.data.Dataset):
         target["labels"] = labels
         target["area"] = area
         target["iscrowd"] = iscrowd
-        image_id = torch.tensor([idx])
+        image_id = int(idx)
         target["image_id"] = image_id
         # apply the image transforms
         if self.transforms:
