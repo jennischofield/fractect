@@ -143,7 +143,7 @@ def convert_images_to_jpg(target_dir, jpg_dir):
                 savestring = jpg_dir + filename[:-3] + "jpg"
                 cv2.imwrite(savestring, img, [
                             int(cv2.IMWRITE_JPEG_QUALITY), 100])
-            except Exception as e:
+            except FileNotFoundError as e:
                 print(e, filename)
         elif filename[30] == '.':
             jpg_file_path = jpg_dir
@@ -152,7 +152,6 @@ def convert_images_to_jpg(target_dir, jpg_dir):
             image.save(jpg_file_path + filename[:-3] + "jpg")
         else:
             print("error" + filename)
-    pass
 
 
 def main():
