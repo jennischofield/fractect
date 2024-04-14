@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>FracTect Use Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='stylesheets/styles.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+
+<body>
+    <ul class="nav-bar">
+        <li class="nav-bar"><a class="nav-bar active" href="/home">Home</a></li>
+        <li class="nav-bar"><a class="nav-bar" href="/fractect">FracTect</a></li>
+        <li class="nav-bar"><a class="nav-bar" href="/documentation">Documentation</a></li>
+        <li class="nav-bar"><a class="nav-bar" href="https://github.com/jennischofield/fractect" target="_blank">Source Code</a></li>
+        <li class="nav-bar" style="float:right"><a class="nav-bar" href="/about">About</a></li>
+    </ul>
+    <div>
+        <img src="{{ url_for('static', filename='images/Fractect_logo.svg') }}" alt="FracTect Logo" height="200">
+
+    </div>
+    <div  style="padding:25px">
+    <div class="section-style"  style="padding:25px; text-align:center">
+    <h1>Welcome to FracTect!</h1>
+    <h3>This software is used to classify and detect wrist fractures in X-rays!<br> It has two neural networks, one for classifying an X-ray into Fractured or Not Fractured,<br> and the other to identify in an X-ray where a fracture may be. <br>Head over to the FracTect tab to get started! <br>Documentation and the source code can be found in their respective tabs. <br>For more information, or to contact me, go to the About tab.</h3>
+    </div>
+    </div>
+    
+</body>
+</html>
