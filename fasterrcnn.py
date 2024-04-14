@@ -44,6 +44,9 @@ SAVE_PLOTS_EPOCH = 2  # save loss plots after these many epochs
 SAVE_MODEL_EPOCH = 2  # save model after these many epochs
 MODEL_NAME = 'model'
 
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 def collate_fn(batch):
     """
@@ -112,7 +115,7 @@ def load_faster_rcnn_model(input_model_path):
     model = nn.DataParallel(model)
 
     if input_model_path is not None:
-        model.load_state_dict(torch.load(input_model_path))
+        model.load_state_dict(torch.load(input_model_path, map_location=torch.device("cpu")))
         model.to(DEVICE)
         model.eval()
     else:
@@ -258,19 +261,91 @@ def get_iou_for_num_batch_in_loader(model, data_loader):
     # img = target.
     # output = model(data_loader[0])
 
+def filter_categories(boxes, labels, scores, categories):
+    to_keep = []
+    for index in range(len(boxes)):
+        if labels[index] in categories:
+            to_keep.append(index)
+    print(boxes)
+    print(to_keep)
+    ret_list_boxes = [boxes[i] for i in to_keep]
+    ret_list_labels = [labels[i] for i in to_keep]
+    ret_list_scores = [scores[i] for i in  to_keep]
+    print(ret_list_labels)
+    return ret_list_boxes,ret_list_labels,ret_list_scores
+
+def run_one_image(model, image_path, detection_threshold, categories):
+    image_name = image_path.split('/')[-1]
+    image = cv2.imread(image_path)
+    orig_image = image.copy()
+    # BGR to RGB
+    image = cv2.cvtColor(
+        orig_image, cv2.COLOR_BGR2RGB).astype(np.float32)
+    # make the pixel range between 0 and 1
+    # bring color channels to front
+    image = np.transpose(image, (2, 0, 1)).astype(float)
+     # convert to tensor
+    image = torch.tensor(image, dtype=torch.float)
+    if torch.cuda.is_available():
+        image = image.cuda()
+    # add batch dimension
+    image = torch.unsqueeze(image, 0)
+    with torch.no_grad():
+        outputs = model(image)
+    # load all detection to CPU for further operations
+    outputs = [{k: v.to('cpu') for k, v in t.items()} for t in outputs]
+    # carry further only if there are detected boxes
+    if len(outputs[0]['boxes']) != 0:
+        boxes = outputs[0]['boxes'].data.numpy()
+        scores = outputs[0]['scores'].data.numpy()
+        labels = outputs[0]['labels'].data.numpy()
+        print(labels)
+        print(scores)
+        # filter out boxes according to `detection_threshold`
+        boxes = boxes[scores >= detection_threshold].astype(np.int32)
+        #filter out boxes if they're in the categories to be seen
+        boxes,labels,scores = filter_categories(boxes,labels,scores,categories)
+        print(boxes)
+        draw_boxes = boxes.copy()
+        # get all the predicited class names
+        pred_classes = [CLASSES[i]
+                        for i in labels]
+        print(pred_classes)
+        print(scores)
+        # draw the bounding boxes and write the class name on top of it
+        for j, box in enumerate(draw_boxes):
+            cv2.rectangle(orig_image,
+                            (int(box[0]), int(box[1])),
+                            (int(box[2]), int(box[3])),
+                            (0, 0, 255), 2)
+            cv2.putText(orig_image, str(pred_classes[j]) + " "
+                        + str(round(scores[j]*100, 2)) + "%",
+                        (int(box[0]), int(box[1]-5)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0),
+                        2, lineType=cv2.LINE_AA)
+
+        path = os.getcwd() + "/static/results"
+        try:
+            cv2.imwrite(os.path.join(path,"modeldetectionimage.jpg"), orig_image)
+        except Exception as e:
+            print(e)
+        # JUST ADD THIS AS A RESULTS SECTION
+        return pred_classes,scores
+
 
 def run_tests(model, test_images, detection_threshold):
     path = "C:/Users/jenni/Desktop/Diss_Work/fractect/test_predictions"
-    for img in enumerate(test_images):
+    for index, img in enumerate(test_images):
+        print(img)
         # get the image file name for saving output later on
         _, fe = os.path.splitext(img)
         if fe == ".xml":
             print("xml file")
         else:
-            image_name = img.split('\\')[-1]
+            image_name = img.split('/')[-1]
             image = cv2.imread(img)
             orig_image = image.copy()
-            # BGR to RGBe
+            # BGR to RGB
             image = cv2.cvtColor(
                 orig_image, cv2.COLOR_BGR2RGB).astype(np.float32)
             # make the pixel range between 0 and 1
@@ -282,6 +357,7 @@ def run_tests(model, test_images, detection_threshold):
             image = torch.unsqueeze(image, 0)
             with torch.no_grad():
                 outputs = model(image)
+            print(outputs)
             # load all detection to CPU for further operations
             outputs = [{k: v.to('cpu') for k, v in t.items()} for t in outputs]
             # carry further only if there are detected boxes
@@ -362,7 +438,7 @@ def run():
         "C:\\Users\\jenni\\Desktop\\Diss_Work\\fractect\\FasterRCNNModelFinal.pth")
     run_tests(model, test_images, detection_threshold=detection_threshold)
     # evaluate(model, test_rcnn_subset_loader, DEVICE)
-    get_iou_for_num_batch_in_loader(model, test_rcnn_subset_loader)
+    # get_iou_for_num_batch_in_loader(model, test_rcnn_subset_loader)
 
 
 def main():

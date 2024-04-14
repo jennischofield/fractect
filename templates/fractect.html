@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>FracTect Use Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='stylesheets/styles.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+
+<body>
+    <ul class="nav-bar">
+        <li class="nav-bar"><a class="nav-bar" href="/home">Home</a></li>
+        <li class="nav-bar"><a class="nav-bar active" href="/fractect">FracTect</a></li>
+        <li class="nav-bar"><a class="nav-bar" href="/documentation">Documentation</a></li>
+        <li class="nav-bar"><a class="nav-bar" href="https://github.com/jennischofield/fractect" target="_blank">Source Code</a></li>
+        <li class="nav-bar" style="float:right"><a class="nav-bar" href="/about">About</a></li>
+    </ul>
+    <div>
+        <img src="{{ url_for('static', filename='images/Fractect_logo.svg') }}" alt="FracTect Logo" height="100">
+    </div>
+    <div class="grid-container">
+        <div class="section-padding">
+            <h1 style="color: #000;">Classification</h1>
+            <div class="section-style">
+                <div>
+                    <p>Upload your wrist X-ray image here. <br> Acceptable file formats are: DICOM, JPG, JPEG, and PNG <br>
+                        <b>Please note, the Grad-CAM output is NOT an accurate depiction of fracture location.</b>
+                    </p>
+                    <div>
+                        <form class="classification-wrapper" enctype="multipart/form-data" method="post"
+                            action="{{url_for('classify')}}">
+                            <label for="classification-file-upload" class="custom-file-upload"
+                                style="border:#143D8F; border-left-width:0px; border-right-width: 3px ; border-top-width: 4px; border-style: solid;">Upload
+                                X-ray</label>
+                            <input id="classification-file-upload" type="file" name="classification-image"
+                                accept="*/dicom,.dcm, image/dcm, */dcm, .dicom, image/png, image/jpg, image/jpeg"
+                                onchange="loadFileClassification(event)">
+                            <label for="classification-submit" class="custom-file-upload"
+                                style="border: #143D8F; border-right-width:3pxpx; border-left-width: 2px; border-top-width: 4px; border-style:solid;">Classify!</label>
+                            <input id="classification-submit" type="submit" value="Classify!">
+                            <label for="rotateimage" class="custom-file-upload"
+                                style="border: #143D8F; border-right-width:0px; border-left-width: 2px; border-top-width: 4px; border-style:solid;">Rotate 90°</label>
+                            
+                            <input type="button" value="Rotate 90°" id="rotateimage">
+                        </form>
+                    </div>
+                    <script>
+                        $('#rotateimage').click(function () {
+                            var img = $('#modelgradcamoutput');
+                            if (img.hasClass('north')) {
+                                img.attr('class', 'west');
+                            } else if (img.hasClass('west')) {
+                                img.attr('class', 'south');
+                            } else if (img.hasClass('south')) {
+                                img.attr('class', 'east');
+                            } else if (img.hasClass('east')) {
+                                img.attr('class', 'north');
+                            }
+                        });
+                    </script>
+                </div>
+
+                <div class="grid-container-2">
+                    <div
+                        style="border:#143D8F;border-left-width:0px; border-bottom-width: 2px; border-top-width: 2px; border-right-width: 2px; border-style: solid;">
+                        <img id="uploadedFileClassification" alt="The initial uploaded image."
+                            src="{{ url_for('static', filename='/inputs/uploadedFileClassification.jpg') }}"
+                            onerror="this.onerror=null;this.src='static\\images\\uploaded_image_placeholder.svg';" />
+                    </div>
+
+                    <script>
+                        var loadFileClassification = function (event) {
+                            var output = document.getElementById('uploadedFileClassification');
+                            output.src = URL.createObjectURL(event.target.files[0]);
+                            output.onload = function () {
+                                URL.revokeObjectURL(output.src) // free memory
+                            }
+                        };
+                    </script>
+
+                    <div
+                        style="border:#143D8F;border-left-width:3px; border-bottom-width: 2px; border-top-width: 2px; border-right-width: 0px; border-style: solid;">
+                        <img id="modelgradcamoutput"
+                            src="{{ url_for('static', filename='results/modelgradcamoutput.jpg') }}"
+                            onerror="this.onerror=null;this.src='static\\images\\grad_cam_placeholder.svg';" alt="Grad-CAM result image" class="north">
+                    </div>
+
+                </div>
+                {% if results %}
+                <div
+                    style="border: #143D8F; border-top-width: 3px; border-bottom-width:0px;border-left-width:0px;border-right-width: 0px; border-style: solid;">
+                    {% if results[0][1][0] == 0 and results[0][0][0] * 100 >= 85 %}
+                    <h3>Result: Fractured</h3>
+                    {% elif results[0][1][0] == 1 and results[0][0][0] * 100 >= 85 %}
+                    <h3>Result: Not Fractured</h3>
+                    {% elif results[0][1][0] == 0 and 60 < results[0][0][0] * 100 < 85 %}
+                    <h3 >Result: Flagged For Review - More Likely Fractured</h3>
+                    {% elif results[0][1][0] == 1 and 60 < results[0][0][0] * 100 < 85 %}
+                    <h3>Result: Flagged For Review - More Likely Not Fractured</h3>
+                    {% else %}
+                    <h3>Result: Flagged For Review - Unsure</h3>
+                    {% endif %}
+                    {% if results[0][1][0] == 0 %}
+                    <h5>Fractured: {{'%0.2f' | format(results[0][0][0] * 100)}}%</h5> 
+                    <h5>Not Fractured: {{'%0.2f' | format(results[0][0][1] * 100)}}%</h5> 
+                    {% elif results[0][1][0] == 1 %}
+                    <h5>Not Fractured: {{'%0.2f' | format(results[0][0][0] * 100)}}%</h5> 
+                    <h5>Fractured: {{'%0.2f' | format(results[0][0][1] * 100)}}%</h5> 
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="section-padding">
+            <h1>Detection</h1>
+            <div class="section-style">
+
+                <div>
+                    
+
+                    <form action="{{ url_for('detect') }}" style="margin: 0px;" id="detection-form" method="post" enctype="multipart/form-data">
+
+                        <div>
+                            
+                            <label for="detection-threshold">Detection Threshold: </label>
+                            <input type="number" id="detection-threshold" name="detection-threshold" min="0" max="1"
+                                step="0.05" value="0.75">
+                            <input type="checkbox" name="use-prev"/>Use Previous X-ray
+                            <br>
+                            <input type="checkbox" onClick="toggle(this)" /> Toggle All
+                            
+                            <div class="segmentation-options">
+                                <li class="seg-option-style"><input type="checkbox" class="seg-option"
+                                        name="boneanomaly">Bone Anomaly<br /></li>
+                                <li class="seg-option-style"><input type="checkbox" class="seg-option"
+                                        name="bonelesion">Bone Lesion<br /></li>
+                                <li class="seg-option-style"><input type="checkbox" class="seg-option"
+                                        name="foreignbody">Foreign Body<br /></li>
+                                <li class="seg-option-style"><input type="checkbox" class="seg-option"
+                                        name="fracture">Fracture<br /></li>
+                                <li class="seg-option-style"><input type="checkbox" class="seg-option"
+                                        name="metal">Metal</li>
+                                <li class="seg-option-style"><input type="checkbox" class="seg-option"
+                                        name="periostealreaction">Periosteal Reaction<br /></li>
+                                <li class="seg-option-style"><input type="checkbox" class="seg-option"
+                                        name="pronatorsign">Pronator Sign<br /></li>
+                                <li class="seg-option-style"><input type="checkbox" class="seg-option"
+                                        name="softtissue">Soft Tissue<br /></li>
+                                <li class="seg-option-style"><input type="checkbox" class="seg-option"
+                                        name="text">Text<br /></li>
+                            </div>
+
+                        </div>
+
+                    </form>
+                    <div class="classification-wrapper">
+
+                        <label for="detection-file-upload" class="custom-file-upload"
+                            style="border: #143D8F; border-top-width: 4px; border-bottom-width:0px;border-left-width:0px;border-right-width: 2px; border-style: solid;">Upload
+                            X-ray</label>
+                        <input id="detection-file-upload" type="file"
+                            accept="*/dicom,.dcm, image/dcm, */dcm, .dicom, image/png, image/jpg, image/jpeg"
+                            onchange="loadFileDetection(event)" form="detection-form" name="detection-image">
+
+
+                        <label for="detection-button" class="custom-file-upload"
+                            style="border: #143D8F; border-top-width: 4px; border-bottom-width:0px;border-left-width:3px;border-right-width: 0px; border-style: solid;">Detect!</label>
+                        <input id="detection-button" type="submit" value="Detect!" form="detection-form" onclick="!this.form && document.getElementById('detection-form').submit()">
+                        
+                    </div>
+                    <div class="grid-container-2">
+                        <div
+                            style="border:#143D8F;border-style:solid;border-top-width: 4px;border-bottom-width:0px;border-left-width:0px;border-right-width:2px;">
+                            <img id="uploadeddetectionfile" src="{{ url_for('static', filename='/inputs/uploadedFileDetection.jpg') }}"
+                            onerror="this.onerror=null;this.src='static\\images\\uploaded_image_placeholder.svg';" alt="The inital uploaded file"/>
+                        </div>
+                        <div
+                            style="border:#143D8F;border-style:solid;border-top-width: 4px;border-bottom-width:0px;border-left-width:3px;border-right-width:0px;">
+                            <img id="modeldetectionoutput" src="{{ url_for('static', filename='results/modeldetectionimage.jpg') }}"
+                            onerror="this.onerror=null;this.src='static\\images\\detection_placeholder.svg';" alt="The detection result image"/>
+                        </div>
+                    </div>
+                    {% if detection_results_labels and detection_results_scores %}
+                <div
+                    style="border: #143D8F; border-top-width: 3px; border-bottom-width:0px;border-left-width:0px;border-right-width: 0px; border-style: solid;">
+                    <h3>Results:</h3>
+                    {% for index in range(detection_results_labels | length) %}
+                    <h5>{{detection_results_labels[index].title()}}: {{'%0.2f' | format(detection_results_scores[index] * 100)}}%</h5>
+                    {% endfor %}
+                </div>
+                    {% endif %}
+                    <script>
+                        function toggle(source) {
+                            checkboxes = document.getElementsByClassName('seg-option');
+                            for (var i = 0, n = checkboxes.length; i < n; i++) {
+                                checkboxes[i].checked = source.checked;
+                            }
+                        }</script>
+
+                </div>
+                <script>
+                    var loadFileDetection = function (event) {
+                        var output = document.getElementById('uploadeddetectionfile');
+                        output.src = URL.createObjectURL(event.target.files[0]);
+                        output.onload = function () {
+                            URL.revokeObjectURL(output.src) // free memory
+                        }
+                    };
+                </script>
+                <script type="text/javascript">
+                    $(document).ready(function() {
+                        
+                        
+                        if(sessionStorage.getItem('popState') != 'shown'){
+                            
+                            $('#warning-modal').delay(1000).fadeIn();
+                            
+                        }
+                    
+                        $('#close').click(function() // You are clicking the close button
+                        {
+                            sessionStorage.setItem('popState','shown')
+                            $('#warning-modal').fadeOut(); // Now the pop up is hidden.
+                        });
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+    <div id="warning-modal" class="modalDialog">
+        <div>
+          <div id="close" title="Close" class="close">X</div>
+            <h1><b>WARNING</b></h1>
+          <h3 style="color:black; padding:100px 0">FracTect is <b>NOT</b> a replacement for medical diagnosis, and should only be used 
+        in conjunction with a medical professional's opinion.<br> These neural networks have been trained exclusively on <b>wrist</b> fractures,
+    any other fractures will not produce the same results.<br> We accept no responsibility for injury, damage, or loss from using FracTect in lieu of an offical diagnosis.</h3>
+      
+        </div>
+      </div>
+
+</body>
+
+</html>

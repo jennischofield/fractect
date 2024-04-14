@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>FracTect Use Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='stylesheets/styles.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+
+<body>
+    <ul class="nav-bar">
+        <li class="nav-bar"><a class="nav-bar" href="/home">Home</a></li>
+        <li class="nav-bar"><a class="nav-bar" href="/fractect">FracTect</a></li>
+        <li class="nav-bar"><a class="nav-bar" href="/documentation">Documentation</a></li>
+        <li class="nav-bar"><a class="nav-bar" href="https://github.com/jennischofield/fractect" target="_blank">Source Code</a></li>
+        <li class="nav-bar" style="float:right"><a class="nav-bar active" href="/about">About</a></li>
+    </ul>
+    <div>
+        <img src="{{ url_for('static', filename='images/Fractect_logo.svg') }}" alt="FracTect Logo" height="200">
+
+    </div>
+    <div style="padding:25px">
+    <div class="section-style"  style="padding:25px; text-align:center">
+        <p>This project was developed during 2023/24 as my undergraduate dissertation project at the University of Exeter.
+            <br>The classification model uses the ResNext-50 architecture, the paper for which can be found <a href="https://arxiv.org/abs/1611.05431">here</a>.
+            <br>The detection model uses the Faster R-CNN architecture, the paper for which can be found <a href="https://arxiv.org/abs/1506.01497">here</a>.
+            <br>The dataset used was the <a href="https://www.nature.com/articles/s41597-022-01328-z">GRAZPEDWRI-DX dataset</a>, which was comprised of 20,327 images of wrist fractures. 
+            <br>The dataset was anonymised prior to this project, but as part of pre-processing for classification, 
+            <br>the minority class (Not Fractured) was augmented to match the majority class's size. 
+            <br>The augmentation steps can be found under the augmentation.py and checkdatasetbalance.py in the GitHub repo. </p>
+            <br>
+            <h3>For issues, suggestions, bug reports, or to request a copy of the associated paper for FracTect, please email <a href="mailto:schofieldjenni@gmail.com">schofieldjenni@gmail.com</a></h3>
+    </div>
+    </div>
+    
+</body>
+</html>

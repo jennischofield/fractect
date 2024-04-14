@@ -6,7 +6,9 @@ from torchvision import datasets
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 from adjustimage import AdjustImage
+import ssl
 
+ssl._create_default_https_context = ssl._create_unverified_context
 
 def load_resnext_model(device, input_model_path):
     ret_model = torch.hub.load(
@@ -15,7 +17,7 @@ def load_resnext_model(device, input_model_path):
     if input_model_path is None:
         ret_model.to(device)
     else:
-        ret_model.load_state_dict(torch.load(input_model_path))
+        ret_model.load_state_dict(torch.load(input_model_path, map_location=torch.device("cpu")))
         ret_model.to(device)
     return ret_model
 

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>FracTect Use Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='stylesheets/styles.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+
+<body>
+    <ul class="nav-bar">
+        <li class="nav-bar"><a class="nav-bar" href="/home">Home</a></li>
+        <li class="nav-bar"><a class="nav-bar" href="/fractect">FracTect</a></li>
+        <li class="nav-bar"><a class="nav-bar active" href="/documentation">Documentation</a></li>
+        <li class="nav-bar"><a class="nav-bar" href="https://github.com/jennischofield/fractect" target="_blank">Source Code</a></li>
+        <li class="nav-bar" style="float:right"><a class="nav-bar" href="/about">About</a></li>
+    </ul>
+    <div>
+        <img src="{{ url_for('static', filename='images/Fractect_logo.svg') }}" alt="FracTect Logo" height="200">
+
+    </div>
+    <div  style="padding:25px">
+    <div class="section-style"  style="padding:25px; text-align:center">
+    <h1>Documentation</h1>
+    <h3>To use FracTect, first ensure your image is in DICOM, JPG, or PNG format.</h3>
+    <h5>Please note, DICOM images will not be previewed pre-analysis.</h5>
+    <h2>Classification:</h2>
+    <h4>1) Upload your image using the Upload Image button. JPG and PNG images will be previewed before classification is run. If you fail to provide an image, the page will refresh.</h4>
+    <h4>2) Click the Classify! button to run the classification on the image. The Grad-CAM image will be displayed, and the results from the model will be displayed below the image. The thresholds are >85% to be confident, >60% to be more likely one class, and anything else will be unsure. Specific percentages will be displayed along with the class.</h4>
+    <h4>3) Use the Rotate 90° button to reorient the Grad-CAM image to the correct orientation. Due to the model processing, it may rotate the original image to adjust for the shear or rotation of the original image.</h4>
+    <h2>Detection:</h2>
+    <h4>1) Either upload your image using the Upload Image button, or if you have run an X-ray through Classification, you can select the Use Previous X-ray checkbox to run that X-ray through Detection as well.</h4>
+    <h4>2) Select what you want the detection threshold to be. This value represents how confident the model is in the bounding box. Anything below 0.50 risks dubious results, and anything below 0.1 will allow various junk results on the image.</h4>
+    <h4>3) Select which objects you wish to be identified on the image. Please keep in mind, this model was trained on a dataset tailored for fractures, so other object detection may not be as high quality. You also may toggle on all objects, and see all the objects the model detects.</h4>
+    <h4>4) Click the Detect! button to run the detection model on the image. The image with bounding boxes overlayed will be displayed, and individual results with confidence scores will be displayed below the images.</h4>
+    <h3>If there are any questions on this software, please feel free to contact me at <a href="mailto:schofieldjenni@gmail.com">schofieldjenni@gmail.com</a></h3>
+</div>
+    </div>
+    
+</body>
+</html>
