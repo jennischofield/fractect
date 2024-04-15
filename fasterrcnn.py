@@ -324,7 +324,7 @@ def run_one_image(model, image_path, detection_threshold, categories):
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0),
                         2, lineType=cv2.LINE_AA)
 
-        path = os.getcwd() + "/static/results"
+        path = os.getcwd() + os.sep+"static"+os.sep+"results"
         try:
             cv2.imwrite(os.path.join(path,"modeldetectionimage.jpg"), orig_image)
         except Exception as e:

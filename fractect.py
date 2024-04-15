@@ -19,8 +19,8 @@ app = Flask(__name__)
 DETECTION_MODEL = None
 CLASSIFCATION_MODEL = None
 ALLOWED_EXTENSIONS = {'dcm', 'jpg', 'jpeg', 'png', 'dicom'}
-TEMP_UPLOAD_FOLDER = "static/inputs"
-CLASSIFICATION_TRANSFORMS = v2.Compose(
+TEMP_UPLOAD_FOLDER = "static" + os.sep + "inputs"
+CLASSIFICATION_TRANSFORMS = v2.Compose( 
     [AdjustImage(), v2.Resize([256, 256]), v2.PILToTensor()])
 DEVICE = torch.device(
     'cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -30,27 +30,27 @@ import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 def setup():
-    if os.path.exists("static/inputs/uploadedFileClassification.jpg"):
-        os.remove("static/inputs/uploadedFileClassification.jpg")
-    if os.path.exists("static/results/modelgradcamoutput.jpg"):
-        os.remove("static/results/modelgradcamoutput.jpg")
-    if os.path.exists("static/inputs/uploadedFileDetection.jpg"):
-        os.remove("static/inputs/uploadedFileDetection.jpg")
-    if os.path.exists("static/results/modeldetectionimage.jpg"):
-        os.remove("static/results/modeldetectionimage.jpg")
-    if (os.path.isfile("models/detection_model.pth")
-            and os.path.isfile("models/classification_model.pth")):
+    if os.path.exists("static" + os.sep+ "inputs" + os.sep+"uploadedFileClassification.jpg"):
+        os.remove("static" + os.sep+ "inputs" + os.sep+ "uploadedFileClassification.jpg")
+    if os.path.exists("static" + os.sep+ "results" + os.sep+"modelgradcamoutput.jpg"):
+        os.remove("static"+ os.sep + "results" + os.sep + "modelgradcamoutput.jpg")
+    if os.path.exists("static" + os.sep+ "inputs" + os.sep+"uploadedFileDetection.jpg"):
+        os.remove("static" + os.sep+ "inputs" + os.sep+"uploadedFileDetection.jpg")
+    if os.path.exists("static" + os.sep+"results" + os.sep+"modeldetectionimage.jpg"):
+        os.remove("static"+os.sep+"results" +os.sep+"modeldetectionimage.jpg")
+    if (os.path.isfile("models" + os.sep+ "detection_model.pth")
+            and os.path.isfile("models" + os.sep + "classification_model.pth")):
         try:
             global DETECTION_MODEL
             DETECTION_MODEL = load_faster_rcnn_model(
-                "models/detection_model.pth")
+                "models" +os.sep+"detection_model.pth")
         except Exception as e:
             print("Error loading Detection Model.")
             print(e)
         try:
             global CLASSIFCATION_MODEL
             CLASSIFCATION_MODEL = load_resnext_model(
-                DEVICE, "models/classification_model.pth")
+                DEVICE, "models" + os.sep+"classification_model.pth")
         except Exception as e:
             print("Error loading Classification Model.")
             print(e)
@@ -88,7 +88,7 @@ def allowed_file(filename):
 @app.route("/classify", methods=['POST'])
 def classify():
     if request.method == 'POST':
-        print(request.files['classification-image'])
+        
         if 'classification-image' not in request.files:
             # Better error catching later, but for now,
             # if the person doesn't upload something, it just reloads the page
@@ -135,7 +135,7 @@ def classify():
             image.unsqueeze(0), CLASSIFCATION_MODEL, DEVICE))
 
         run_gradcam(CLASSIFCATION_MODEL, image)
-        print(confidence_results)
+        
         # result gets saved to the correct location
         return render_template("fractect.html", results=confidence_results)
 
@@ -143,9 +143,9 @@ def classify():
 @app.route("/detect", methods=['POST'])
 def detect():
     if request.method == 'POST':
-        print(request.form.get("use-prev"))
+        
         if request.form.get("use-prev") is not None:
-            print("use-prev")
+            
             if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'],
                                            "uploadedFileClassification.jpg")):
                 shutil.copyfile(os.path.join(app.config['UPLOAD_FOLDER'],
@@ -155,7 +155,7 @@ def detect():
             else:
                 return render_template("fractect.html")
         else:
-            print("og image")
+            
 
             if 'detection-image' not in request.files:
                 # Better error catching later, but for now,
@@ -167,35 +167,33 @@ def detect():
                 return render_template("fractect.html")
                 # return redirect('/fractect', 400)
             if file and allowed_file(file.filename):
-                # file.save(os.path.join(app.config['UPLOAD_FOLDER'], "uploadedFileDetection"))
-                print(file.content_type)
+                
                 # have to save it locally to send it to the model
-            if file.content_type == 'application/octet-stream':
-                # do dicom conversion
-                file.save(os.path.join(
-                    app.config['UPLOAD_FOLDER'], "uploadedFileDetection.dcm"))
-                np_array = dicom2jpg.dicom2img(os.path.join(
-                    app.config['UPLOAD_FOLDER'], "uploadedFileDetection.dcm"))
-                dicom_img = Image.fromarray(np_array)
-                dicom_img.save(os.path.join(
-                    app.config['UPLOAD_FOLDER'], "uploadedFileDetection.jpg"))
-                os.remove(os.path.join(
-                    app.config['UPLOAD_FOLDER'], "uploadedFileDetection.dcm"))
-            elif file.content_type == 'image/png':
-                # do png conversion
-                file.save(os.path.join(
-                    app.config['UPLOAD_FOLDER'], "uploadedFileDetection.png"))
-                img_array = cv2.imread(os.path.join(
-                    app.config['UPLOAD_FOLDER'], "uploadedFileDetection.png"))
-                cv2.imwrite(os.path.join(app.config['UPLOAD_FOLDER'],
-                                         "uploadedFileDetection.jpg"), img_array,
-                            [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-                os.remove(os.path.join(
-                    app.config['UPLOAD_FOLDER'], "uploadedFileDetection.png"))
-            elif file.content_type == 'image/jpg' or file.content_type == 'image/jpeg':
-                file.save(os.path.join(
-                    app.config['UPLOAD_FOLDER'], "uploadedFileDetection.jpg"))
-            print(":)")
+                if file.content_type == 'application/octet-stream':
+                    # do dicom conversion
+                    file.save(os.path.join(
+                        app.config['UPLOAD_FOLDER'], "uploadedFileDetection.dcm"))
+                    np_array = dicom2jpg.dicom2img(os.path.join(
+                        app.config['UPLOAD_FOLDER'], "uploadedFileDetection.dcm"))
+                    dicom_img = Image.fromarray(np_array)
+                    dicom_img.save(os.path.join(
+                        app.config['UPLOAD_FOLDER'], "uploadedFileDetection.jpg"))
+                    os.remove(os.path.join(
+                        app.config['UPLOAD_FOLDER'], "uploadedFileDetection.dcm"))
+                elif file.content_type == 'image/png':
+                    # do png conversion
+                    file.save(os.path.join(
+                        app.config['UPLOAD_FOLDER'], "uploadedFileDetection.png"))
+                    img_array = cv2.imread(os.path.join(
+                        app.config['UPLOAD_FOLDER'], "uploadedFileDetection.png"))
+                    cv2.imwrite(os.path.join(app.config['UPLOAD_FOLDER'],
+                                            "uploadedFileDetection.jpg"), img_array,
+                                [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+                    os.remove(os.path.join(
+                        app.config['UPLOAD_FOLDER'], "uploadedFileDetection.png"))
+                elif file.content_type == 'image/jpg' or file.content_type == 'image/jpeg':
+                    file.save(os.path.join(
+                        app.config['UPLOAD_FOLDER'], "uploadedFileDetection.jpg"))
         image_path = os.path.join(
             app.config['UPLOAD_FOLDER'], "uploadedFileDetection.jpg")
         threshold = float(request.form.get("detection-threshold"))
