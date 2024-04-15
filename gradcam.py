@@ -1,3 +1,4 @@
+from pathlib import Path
 import torch
 import matplotlib
 matplotlib.use('Agg')
@@ -96,13 +97,12 @@ def run_gradcam(model, image):
 
     file_path = os.path.dirname(os.path.abspath(__file__))
     # Show the plot
-    plt.savefig(file_path + os.sep+"static"+os.sep+"results"+os.sep+"modelgradcamoutput.jpg",bbox_inches='tight',pad_inches=0.0)
+    plt.savefig(str(Path(file_path + "/static/results/modelgradcamoutput.jpg")),bbox_inches='tight',pad_inches=0.0)
     #plt.show()
 def main():
     DEVICE = torch.device(
     'cuda') if torch.cuda.is_available() else torch.device('cpu')
     CLASSIFICATION_TRANSFORMS = v2.Compose([v2.Resize([256,256]), v2.PILToTensor()])
-    
     model = load_resnext_model(DEVICE,"models\\classification_model.pth" )
     image = Image.open("test_images\\0093_0597190523_02_WRI-R2_M012.jpg")
     image = CLASSIFICATION_TRANSFORMS(image) 

@@ -1,5 +1,6 @@
 import glob
 import os
+from pathlib import Path
 import time
 
 import albumentations as A
@@ -299,19 +300,14 @@ def run_one_image(model, image_path, detection_threshold, categories):
         boxes = outputs[0]['boxes'].data.numpy()
         scores = outputs[0]['scores'].data.numpy()
         labels = outputs[0]['labels'].data.numpy()
-        print(labels)
-        print(scores)
         # filter out boxes according to `detection_threshold`
         boxes = boxes[scores >= detection_threshold].astype(np.int32)
         #filter out boxes if they're in the categories to be seen
         boxes,labels,scores = filter_categories(boxes,labels,scores,categories)
-        print(boxes)
         draw_boxes = boxes.copy()
         # get all the predicited class names
         pred_classes = [CLASSES[i]
                         for i in labels]
-        print(pred_classes)
-        print(scores)
         # draw the bounding boxes and write the class name on top of it
         for j, box in enumerate(draw_boxes):
             cv2.rectangle(orig_image,
@@ -324,7 +320,7 @@ def run_one_image(model, image_path, detection_threshold, categories):
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0),
                         2, lineType=cv2.LINE_AA)
 
-        path = os.getcwd() + os.sep+"static"+os.sep+"results"
+        path = str(Path(os.getcwd() + "/static/results"))
         try:
             cv2.imwrite(os.path.join(path,"modeldetectionimage.jpg"), orig_image)
         except Exception as e:
@@ -336,7 +332,6 @@ def run_one_image(model, image_path, detection_threshold, categories):
 def run_tests(model, test_images, detection_threshold):
     path = "C:/Users/jenni/Desktop/Diss_Work/fractect/test_predictions"
     for index, img in enumerate(test_images):
-        print(img)
         # get the image file name for saving output later on
         _, fe = os.path.splitext(img)
         if fe == ".xml":
@@ -357,7 +352,6 @@ def run_tests(model, test_images, detection_threshold):
             image = torch.unsqueeze(image, 0)
             with torch.no_grad():
                 outputs = model(image)
-            print(outputs)
             # load all detection to CPU for further operations
             outputs = [{k: v.to('cpu') for k, v in t.items()} for t in outputs]
             # carry further only if there are detected boxes
@@ -383,7 +377,6 @@ def run_tests(model, test_images, detection_threshold):
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0),
                                 2, lineType=cv2.LINE_AA)
 
-                print(image_name)
                 cv2.imwrite(os.path.join(path, image_name), orig_image)
         print(f"Image {test_images.index(img)} done...")
         print('-'*50)

@@ -14,12 +14,13 @@ from confidencelevels import get_conf_for_image
 from fasterrcnn import load_faster_rcnn_model, run_one_image
 from gradcam import run_gradcam
 from traintest import load_resnext_model
+from pathlib import Path
 
 app = Flask(__name__)
 DETECTION_MODEL = None
 CLASSIFCATION_MODEL = None
 ALLOWED_EXTENSIONS = {'dcm', 'jpg', 'jpeg', 'png', 'dicom'}
-TEMP_UPLOAD_FOLDER = "static" + os.sep + "inputs"
+TEMP_UPLOAD_FOLDER = Path('static/inputs')
 CLASSIFICATION_TRANSFORMS = v2.Compose( 
     [AdjustImage(), v2.Resize([256, 256]), v2.PILToTensor()])
 DEVICE = torch.device(
@@ -30,27 +31,27 @@ import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 def setup():
-    if os.path.exists("static" + os.sep+ "inputs" + os.sep+"uploadedFileClassification.jpg"):
-        os.remove("static" + os.sep+ "inputs" + os.sep+ "uploadedFileClassification.jpg")
-    if os.path.exists("static" + os.sep+ "results" + os.sep+"modelgradcamoutput.jpg"):
-        os.remove("static"+ os.sep + "results" + os.sep + "modelgradcamoutput.jpg")
-    if os.path.exists("static" + os.sep+ "inputs" + os.sep+"uploadedFileDetection.jpg"):
-        os.remove("static" + os.sep+ "inputs" + os.sep+"uploadedFileDetection.jpg")
-    if os.path.exists("static" + os.sep+"results" + os.sep+"modeldetectionimage.jpg"):
-        os.remove("static"+os.sep+"results" +os.sep+"modeldetectionimage.jpg")
-    if (os.path.isfile("models" + os.sep+ "detection_model.pth")
-            and os.path.isfile("models" + os.sep + "classification_model.pth")):
+    if os.path.exists(str(Path("static/inputs/uploadedFileClassification.jpg"))):
+        os.remove(str(Path("static/inputs/uploadedFileClassification.jpg")))
+    if os.path.exists(str(Path("static/results/modelgradcamoutput.jpg"))):
+        os.remove(str(Path("static/results/modelgradcamoutput.jpg")))
+    if os.path.exists(str(Path("static/inputs/uploadedFileDetection.jpg"))):
+        os.remove(str(Path("static/inputs/uploadedFileDetection.jpg")))
+    if os.path.exists(str(Path("static/results/modeldetectionimage.jpg"))):
+        os.remove(str(Path("static/results/modeldetectionimage.jpg")))
+    if (os.path.isfile(str(Path("models/detection_model.pth")))
+            and os.path.isfile(str(Path("models/classification_model.pth")))):
         try:
             global DETECTION_MODEL
-            DETECTION_MODEL = load_faster_rcnn_model(
-                "models" +os.sep+"detection_model.pth")
+            DETECTION_MODEL = load_faster_rcnn_model( str(Path("models/detection_model.pth"))
+               )
         except Exception as e:
             print("Error loading Detection Model.")
             print(e)
         try:
             global CLASSIFCATION_MODEL
             CLASSIFCATION_MODEL = load_resnext_model(
-                DEVICE, "models" + os.sep+"classification_model.pth")
+                DEVICE, str(Path("models/classification_model.pth")))
         except Exception as e:
             print("Error loading Classification Model.")
             print(e)
@@ -88,7 +89,6 @@ def allowed_file(filename):
 @app.route("/classify", methods=['POST'])
 def classify():
     if request.method == 'POST':
-        
         if 'classification-image' not in request.files:
             # Better error catching later, but for now,
             # if the person doesn't upload something, it just reloads the page
@@ -135,7 +135,6 @@ def classify():
             image.unsqueeze(0), CLASSIFCATION_MODEL, DEVICE))
 
         run_gradcam(CLASSIFCATION_MODEL, image)
-        
         # result gets saved to the correct location
         return render_template("fractect.html", results=confidence_results)
 
@@ -143,9 +142,7 @@ def classify():
 @app.route("/detect", methods=['POST'])
 def detect():
     if request.method == 'POST':
-        
         if request.form.get("use-prev") is not None:
-            
             if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'],
                                            "uploadedFileClassification.jpg")):
                 shutil.copyfile(os.path.join(app.config['UPLOAD_FOLDER'],
@@ -155,7 +152,6 @@ def detect():
             else:
                 return render_template("fractect.html")
         else:
-            
 
             if 'detection-image' not in request.files:
                 # Better error catching later, but for now,
@@ -167,7 +163,6 @@ def detect():
                 return render_template("fractect.html")
                 # return redirect('/fractect', 400)
             if file and allowed_file(file.filename):
-                
                 # have to save it locally to send it to the model
                 if file.content_type == 'application/octet-stream':
                     # do dicom conversion
