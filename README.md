@@ -9,13 +9,19 @@ A few things before you try to run the project - I don't know the status of your
 5) Now we have our venv, we need to download all the necessary packages for this to work. We'll be using pip to do so, but if you're on it, you can use conda, or whatever package manager you'd like, just adjust the commands as you'd like. Verify that pip is installed by:
 	Windows: py -m ensurepip --upgrade       MacOS/Unix: python -m ensurepip --upgrade
 
-6)Install dicom2jpg: pip install dicom2jpg
-7)Install flask: pip install flask
-8)Install albumetations: pip install albumentations
-9)Install torchmetrics: pip install torchmetrics
-10)Install tqdm: pip install tqdm
-11)Install torchvision: pip install torchvision
-12)Install matplotlib: pip install matplotlib
+6) Install dicom2jpg: pip install dicom2jpg
+
+7) Install flask: pip install flask
+
+8) Install albumetations: pip install albumentations
+
+9) Install torchmetrics: pip install torchmetrics
+
+10) Install tqdm: pip install tqdm
+
+11) Install torchvision: pip install torchvision
+
+12) Install matplotlib: pip install matplotlib
 
 13) This should be all the requirements now. Navigate to the folder containing the code. Example: To get to Downloads, do cd Downloads. Repeat until you're at the tester-package folder.
 
