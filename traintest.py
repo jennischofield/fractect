@@ -10,6 +10,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
+
 def load_resnext_model(device, input_model_path):
     ret_model = torch.hub.load(
         'pytorch/vision:v0.10.0', 'resnext50_32x4d', pretrained=True)
@@ -17,7 +18,8 @@ def load_resnext_model(device, input_model_path):
     if input_model_path is None:
         ret_model.to(device)
     else:
-        ret_model.load_state_dict(torch.load(input_model_path, map_location=torch.device("cpu")))
+        ret_model.load_state_dict(torch.load(
+            input_model_path, map_location=torch.device("cpu")))
         ret_model.to(device)
     return ret_model
 
@@ -38,7 +40,6 @@ def train_resnext(dataloader, model, loss_fn, optimizer, device):
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
-        # scheduler.step(loss)
         if batch % 100 == 0:
             loss, current = loss.item(), (batch + 1) * len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
@@ -103,8 +104,10 @@ def generate_confusion_matrix(model, test_dataloader, device):
     cmdisplay.plot()
     plt.savefig("/model_results/confusion_matrix_resnext")
 
+
 def save_model(model, path):
     torch.save(model.state_dict(), path)
+
 
 def main():
     path = '{path to the JPG files }'
@@ -128,7 +131,7 @@ def main():
         else "cpu"
     )
     model = load_resnext_model(
-        device, 'C:\\Users\\jenni\\Desktop\\Diss_Work\\fractect\\model_with_multi_fracture.pth')
+        device, '\\model_with_multi_fracture.pth')
 
     loss_fn = nn.CrossEntropyLoss()
     optimiser = torch.optim.Adam(model.parameters(), lr=1e-3)

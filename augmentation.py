@@ -155,7 +155,7 @@ def convert_images_to_jpg(target_dir, jpg_dir):
 
 
 def main():
-    path = 'C:\\Users\\jenni\\Desktop\\Diss_Work\\Unbroken\\'
+    path = '\\Unbroken\\'
     # the count should be the number of files in the other class to match
     # In my case, I matched the 8689 of single fracture breaks
     count_to_match = 14158
@@ -169,10 +169,10 @@ def main():
     # JPG easier than the original images.
     # convert_images_to_jpg switches on if there's an added chunk to the filename
     # as there would be for augmented images.
-    target_fractured = 'C:\\Users\\jenni\\Desktop\\Diss_Work\\Fractured_w_multi\\'
-    target_unbroken = 'C:\\Users\\jenni\\Desktop\\Diss_Work\\Unbroken_w_multi\\'
-    jpg_dir_fractured = 'C:\\Users\\jenni\\Desktop\\Diss_Work\\jpgwmulti\\Fractured\\'
-    jpg_dir_unbroken = 'C:\\Users\\jenni\\Desktop\\Diss_Work\\jpgwmulti\\NotFractured\\'
+    target_fractured = '\\Fractured_w_multi\\'
+    target_unbroken = '\\Unbroken_w_multi\\'
+    jpg_dir_fractured = '\\jpgwmulti\\Fractured\\'
+    jpg_dir_unbroken = '\\jpgwmulti\\NotFractured\\'
     convert_images_to_jpg(target_dir=target_fractured,
                           jpg_dir=jpg_dir_fractured)
     convert_images_to_jpg(target_dir=target_unbroken, jpg_dir=jpg_dir_unbroken)

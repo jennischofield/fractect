@@ -2,6 +2,7 @@ import glob
 import os
 import json
 from collections import Counter
+import shutil
 import matplotlib.pyplot as plt
 import pandas as pd
 single_fractures = []
@@ -34,7 +35,177 @@ multi_counter = Counter(multi_fractures)
 unbroken_counter = Counter(unbroken)
 path = ''
 
-
+def arrange_images_from_folders():
+    # Replace each \\images_part1 with the absolute path to the current folder/ 
+    # Or where the dataset was downloaded to
+    directory1 = os.listdir("\\images_part1")
+    directory2 = os.listdir("\\images_part2")
+    directory3 = os.listdir("\\images_part3")
+    directory4 = os.listdir("\\images_part4")
+    single_break_dir = os.listdir("\\Single Fractures")
+    multi_break_dir = os.listdir("\\Multi Fractures")
+    unbroken_dir = os.listdir("\\Unbroken")
+    fails = 0
+    success = 0
+    for fname in single_fracture_files:
+        name_to_lookup = fname[fname.index('\\')+1:fname.index('.')]
+        flag = False
+        for filename_in_dir in directory1:
+            path = '\\images_part1\\' + str(filename_in_dir)
+            if name_to_lookup in filename_in_dir:
+                flag = True
+                f = open(path,'r')
+                if name_to_lookup not in single_break_dir:
+                    shutil.copy(f.name, "\\Single Fractures")
+                    success+=1
+                else:
+                    print("Already copied.")
+                break
+        if flag == False:
+            for filename_in_dir in directory2:
+                path = '\\images_part2\\' + str(filename_in_dir)
+                if name_to_lookup in filename_in_dir:
+                    flag = True
+                    f = open(path,'r')
+                    if name_to_lookup not in single_break_dir:
+                        shutil.copy(f.name, "\\Single Fractures")
+                        success+=1
+                    else:
+                        print("Already copied.")
+                    break
+        if flag == False:
+            for filename_in_dir in directory3:
+                path = '\\images_part3\\' + str(filename_in_dir)
+                if name_to_lookup in filename_in_dir:
+                    flag = True
+                    f = open(path,'r')
+                    if name_to_lookup not in single_break_dir:
+                        shutil.copy(f.name, "\\Single Fractures")
+                        success+=1
+                    else:
+                        print("Already copied.")
+                    break
+        if (flag == False):
+            for filename_in_dir in directory4:
+                path = '\\images_part4\\' + str(filename_in_dir)
+                if name_to_lookup in filename_in_dir:
+                    flag = True
+                    f = open(path,'r')
+                    if name_to_lookup not in single_break_dir:
+                        shutil.copy(f.name, "\\Single Fractures")
+                        success+=1
+                    else:
+                        print("Already copied.")
+                    break
+        if flag == False:
+            print(f"Image is missing for corresponding file:{name_to_lookup}")
+            fails+=1
+    for fname in multi_fracture_files:
+        name_to_lookup = fname[fname.index('\\')+1:fname.index('.')]
+        flag = False
+        for filename_in_dir in directory1:
+            path = '\\images_part1\\' + str(filename_in_dir)
+            if name_to_lookup in filename_in_dir:
+                flag = True
+                f = open(path,'r')
+                if name_to_lookup not in multi_fracture_files:
+                    shutil.copy(f.name, "\\Multi Fractures")
+                    success+=1
+                else:
+                    print("Already copied.")
+                break
+        if flag == False:
+            for filename_in_dir in directory2:
+                path = '\\images_part2\\' + str(filename_in_dir)
+                if name_to_lookup in filename_in_dir:
+                    flag = True
+                    f = open(path,'r')
+                    if name_to_lookup not in multi_fracture_files:
+                        shutil.copy(f.name, "\\Multi Fractures")
+                        success+=1
+                    else:
+                        print("Already copied.")
+                    break
+        if flag == False:
+            for filename_in_dir in directory3:
+                path = '\\images_part3\\' + str(filename_in_dir)
+                if name_to_lookup in filename_in_dir:
+                    flag = True
+                    f = open(path,'r')
+                    if name_to_lookup not in multi_fracture_files:
+                        shutil.copy(f.name, "\\Multi Fractures")
+                        success+=1
+                    else:
+                        print("Already copied.")
+                    break
+        if (flag == False):
+            for filename_in_dir in directory4:
+                path = '\\images_part4\\' + str(filename_in_dir)
+                if name_to_lookup in filename_in_dir:
+                    flag = True
+                    f = open(path,'r')
+                    if name_to_lookup not in multi_fracture_files:
+                        shutil.copy(f.name, "\\Multi Fractures")
+                        success+=1
+                    else:
+                        print("Already copied.")
+                    break
+        if flag == False:
+            print(f"Image is missing for corresponding file:{name_to_lookup}")
+            fails+=1
+    for fname in unbroken:
+        name_to_lookup = fname[fname.index('\\')+1:fname.index('.')]
+        flag = False
+        for filename_in_dir in directory1:
+            path = '\\images_part1\\' + str(filename_in_dir)
+            if name_to_lookup in filename_in_dir:
+                flag = True
+                f = open(path,'r')
+                if name_to_lookup not in unbroken:
+                    shutil.copy(f.name, "\\Unbroken")
+                    success+=1
+                else:
+                    print("Already copied.")
+                break
+        if flag == False:
+            for filename_in_dir in directory2:
+                path = '\\images_part2\\' + str(filename_in_dir)
+                if name_to_lookup in filename_in_dir:
+                    flag = True
+                    f = open(path,'r')
+                    if name_to_lookup not in unbroken:
+                        shutil.copy(f.name, "\\Unbroken")
+                        success+=1
+                    else:
+                        print("Already copied.")
+                    break
+        if flag == False:
+            for filename_in_dir in directory3:
+                path = '\\images_part3\\' + str(filename_in_dir)
+                if name_to_lookup in filename_in_dir:
+                    flag = True
+                    f = open(path,'r')
+                    if name_to_lookup not in unbroken:
+                        shutil.copy(f.name, "\\Unbroken")
+                        success+=1
+                    else:
+                        print("Already copied.")
+                    break
+        if (flag == False):
+            for filename_in_dir in directory4:
+                path = '\\images_part4\\' + str(filename_in_dir)
+                if name_to_lookup in filename_in_dir:
+                    flag = True
+                    f = open(path,'r')
+                    if name_to_lookup not in unbroken:
+                        shutil.copy(f.name, "\\Unbroken")
+                        success+=1
+                    else:
+                        print("Already copied.")
+                    break
+        if flag == False:
+            print(f"Image is missing for corresponding file:{name_to_lookup}")
+            fails+=1
 def gather_lists(path):
     # only process .JSON files in folder.
     for filename in glob.glob(os.path.join(path, '*.json')):

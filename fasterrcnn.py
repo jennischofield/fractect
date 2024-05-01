@@ -1,3 +1,4 @@
+import ssl
 import glob
 import os
 from pathlib import Path
@@ -12,12 +13,13 @@ import torchvision
 from albumentations.pytorch import ToTensorV2
 from torch import nn
 from torch.utils.data import DataLoader
-from torchmetrics.detection import IntersectionOverUnion
+from torchmetrics.detection import IntersectionOverUnion, MeanAveragePrecision
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from tqdm.auto import tqdm
 from engine import evaluate
 from Averager import Averager
 from FracturedDataset import FracturedDataset
+from pprint import pprint
 
 BATCH_SIZE = 16  # increase / decrease according to GPU memeory
 RESIZE_TO = 512  # resize the image for training and transforms
@@ -25,12 +27,12 @@ NUM_EPOCHS = 50  # number of epochs to train for
 DEVICE = torch.device(
     'cuda') if torch.cuda.is_available() else torch.device('cpu')
 # training images and XML files directory
-TRAIN_DIR = 'C:\\Users\\jenni\\Desktop\\Diss_Work\\Faster_RCNN\\train'
+TRAIN_DIR = '\\train'
 # validation images and XML files directory
-VALID_DIR = 'C:\\Users\\jenni\\Desktop\\Diss_Work\\Faster_RCNN\\val'
+VALID_DIR = '\\val'
 
 # test images for final case
-TEST_DIR = 'C:\\Users\\jenni\\Desktop\\Diss_Work\\Faster_RCNN\\test'
+TEST_DIR = '\\test'
 # classes: 0 index is reserved for background
 CLASSES = [
     'background', 'boneanomaly', 'bonelesion', 'foreignbody', 'fracture', 'metal',
@@ -45,9 +47,9 @@ SAVE_PLOTS_EPOCH = 2  # save loss plots after these many epochs
 SAVE_MODEL_EPOCH = 2  # save model after these many epochs
 MODEL_NAME = 'model'
 
-import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
+
 
 def collate_fn(batch):
     """
@@ -116,7 +118,8 @@ def load_faster_rcnn_model(input_model_path):
     model = nn.DataParallel(model)
 
     if input_model_path is not None:
-        model.load_state_dict(torch.load(input_model_path, map_location=torch.device("cpu")))
+        model.load_state_dict(torch.load(
+            input_model_path, map_location=torch.device("cpu")))
         model.to(DEVICE)
         model.eval()
     else:
@@ -251,58 +254,45 @@ def train_test_rcnn(model, train_rcnn_loader, test_rcnn_loader):
 
 
 def get_iou_for_num_batch_in_loader(model, data_loader, detection_threshold):
-    for index, item in enumerate(data_loader):
-        print(data_loader.dataset[index][1])
-        target = [data_loader.dataset[index][1]]
-        val = torch.unsqueeze(data_loader.dataset[index][0], 0)
-        res = model(val)
-        res = [{k: v.to('cpu') for k, v in t.items()} for t in res]
-        metric = IntersectionOverUnion(class_metrics=True)
-        boxes = res[0]['boxes'].data.numpy()
-        scores = res[0]['scores'].data.numpy()
-        labels = res[0]['labels'].data.numpy()
-        res[0]['boxes'].data = torch.tensor(boxes[scores >= detection_threshold])
-        res[0]['scores'].data = torch.tensor(scores[scores >= detection_threshold])
-        res[0]['labels'].data = torch.tensor(labels[scores>= detection_threshold])
+    total_count, boneanomaly_count, bonelesion_count, foreignbody_count, fracture_count, metal_count = 0, 0, 0, 0, 0, 0
+    periostealreaction_count, pronatorsign_count, axis_count, softtissue_count, text_count = 0, 0, 0, 0, 0
+    total_iou, boneanomaly_iou, bonelesion_iou, foreignbody_iou, fracture_iou, metal_iou = 0, 0, 0, 0, 0, 0
+    periostealreaction_iou, pronatorsign_iou, axis_iou, softtissue_iou, text_iou = 0, 0, 0, 0, 0
+    metric = IntersectionOverUnion(class_metrics=True)
+    map_metric = MeanAveragePrecision(class_metrics=True)
+    with torch.no_grad():
+        for index, item in enumerate(data_loader):
 
-        print(res[0]['boxes'].data.numpy())
-        print(metric(target, res))
-        # load the image
-        # load the image
-        print(data_loader.dataset.all_images[index])
-        image = cv2.imread(data_loader.dataset.all_images[index])
-        # draw the ground-truth bounding box along with the predicted
-        # bounding box
-        for index_t in range(len(res[0]['boxes'].data.numpy())):
-            print(tuple(int(x) for x in data_loader.dataset[index][1]['boxes'].data.numpy()[index_t][:2]))
-            cv2.rectangle(image, tuple(int(x) for x  in data_loader.dataset[index][1]['boxes'].data.numpy()[index_t][:2]), 
-                tuple(int(x) for x in data_loader.dataset[index][1]['boxes'].data.numpy()[index_t][2:]), (0, 255, 0), 2)
-            cv2.rectangle(image, tuple(int(x) for x in res[0]['boxes'].data.numpy()[index_t][:2]), 
-                tuple(int(x) for x in res[0]['boxes'].data.numpy()[index_t][2:]), (0, 0, 255), 2)
-            # compute the intersection over union and display itS
-            iou = metric(target,res)['iou'].detach().numpy()
-            cv2.putText(image, "IoU: {:.4f}".format(iou), (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-        print("{}: {:.4f}".format(data_loader.dataset.all_images[0], iou))
-            # show the output image
-        cv2.imshow("Image", image)
-        cv2.waitKey(0)
-        # img = target.
-    # output = model(data_loader[0])
-# #def metrics(model, data_loader):
-    
+            target = [data_loader.dataset[index][1]]
+            val = torch.unsqueeze(data_loader.dataset[index][0], 0)
+            res = model(val)
+            res = [{k: v.to('cpu') for k, v in t.items()} for t in res]
+
+            boxes = res[0]['boxes'].data.numpy()
+            scores = res[0]['scores'].data.numpy()
+            labels = res[0]['labels'].data.numpy()
+            res[0]['boxes'].data = torch.tensor(
+                boxes[scores >= detection_threshold])
+            res[0]['scores'].data = torch.tensor(
+                scores[scores >= detection_threshold])
+            res[0]['labels'].data = torch.tensor(
+                labels[scores >= detection_threshold])
+
+            answer = metric(target, res)
+            map_metric.update(res, target)
+    pprint(map_metric.compute())
+
+
 def filter_categories(boxes, labels, scores, categories):
     to_keep = []
     for index in range(len(boxes)):
         if labels[index] in categories:
             to_keep.append(index)
-    print(boxes)
-    print(to_keep)
     ret_list_boxes = [boxes[i] for i in to_keep]
     ret_list_labels = [labels[i] for i in to_keep]
-    ret_list_scores = [scores[i] for i in  to_keep]
-    print(ret_list_labels)
-    return ret_list_boxes,ret_list_labels,ret_list_scores
+    ret_list_scores = [scores[i] for i in to_keep]
+    return ret_list_boxes, ret_list_labels, ret_list_scores
+
 
 def run_one_image(model, image_path, detection_threshold, categories):
     image_name = image_path.split('/')[-1]
@@ -314,7 +304,7 @@ def run_one_image(model, image_path, detection_threshold, categories):
     # make the pixel range between 0 and 1
     # bring color channels to front
     image = np.transpose(image, (2, 0, 1)).astype(float)
-     # convert to tensor
+    # convert to tensor
     image = torch.tensor(image, dtype=torch.float)
     if torch.cuda.is_available():
         image = image.cuda()
@@ -331,13 +321,10 @@ def run_one_image(model, image_path, detection_threshold, categories):
         labels = outputs[0]['labels'].data.numpy()
         # filter out boxes according to `detection_threshold`
         boxes = boxes[scores >= detection_threshold].astype(np.int32)
-        #filter out boxes if they're in the categories to be seen
-        boxes,labels,scores = filter_categories(boxes,labels,scores,categories)
-        #truth_boxes = np.ndarray([[84, 31, 745, 680],[356,180,508,428],[405,286,732,398]])
-        # metric = IntersectionOverUnion()
-        # print(type(boxes))
-        # print(truth_boxes)
-        # print(metric(boxes, truth_boxes))
+        # filter out boxes if they're in the categories to be seen
+        boxes, labels, scores = filter_categories(
+            boxes, labels, scores, categories)
+
         draw_boxes = boxes.copy()
         # get all the predicited class names
         pred_classes = [CLASSES[i]
@@ -345,9 +332,9 @@ def run_one_image(model, image_path, detection_threshold, categories):
         # draw the bounding boxes and write the class name on top of it
         for j, box in enumerate(draw_boxes):
             cv2.rectangle(orig_image,
-                            (int(box[0]), int(box[1])),
-                            (int(box[2]), int(box[3])),
-                            (0, 0, 255), 2)
+                          (int(box[0]), int(box[1])),
+                          (int(box[2]), int(box[3])),
+                          (0, 0, 255), 2)
             cv2.putText(orig_image, str(pred_classes[j]) + " "
                         + str(round(scores[j]*100, 2)) + "%",
                         (int(box[0]), int(box[1]-5)),
@@ -356,19 +343,23 @@ def run_one_image(model, image_path, detection_threshold, categories):
 
         path = str(Path(os.getcwd() + "/static/results"))
         try:
-            cv2.imwrite(os.path.join(path,"modeldetectionimage.jpg"), orig_image)
+            cv2.imwrite(os.path.join(
+                path, "modeldetectionimage.jpg"), orig_image)
         except Exception as e:
             print(e)
-        # JUST ADD THIS AS A RESULTS SECTION
-        return pred_classes,scores
+
+        return pred_classes, scores
+
 
 def run_metrics_loader(model, loader, detection_threshold):
-    
+
     for inputs, labels in loader:
         output = model(inputs)
         output = [{k: v.to('cpu') for k, v in t.items()} for t in output]
         metric = IntersectionOverUnion(class_metrics=True)
         print(metric(output, labels))
+
+
 def run_tests(model, test_images, detection_threshold):
     path = ""
     for index, img in enumerate(test_images):
@@ -394,7 +385,7 @@ def run_tests(model, test_images, detection_threshold):
                 outputs = model(image)
             # load all detection to CPU for further operations
             outputs = [{k: v.to('cpu') for k, v in t.items()} for t in outputs]
-            
+
             # carry further only if there are detected boxes
             if len(outputs[0]['boxes']) != 0:
                 boxes = outputs[0]['boxes'].data.numpy()
@@ -418,7 +409,7 @@ def run_tests(model, test_images, detection_threshold):
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0),
                                 2, lineType=cv2.LINE_AA)
 
-                cv2.imwrite(os.path.join(path,image_name) , orig_image)
+                cv2.imwrite(os.path.join(path, image_name), orig_image)
         print(f"Image {test_images.index(img)} done...")
         print('-'*50)
     print('TEST PREDICTIONS COMPLETE')
@@ -432,7 +423,7 @@ def run():
         VALID_DIR, RESIZE_TO, RESIZE_TO, CLASSES, get_valid_transform())
     test_rcnn_dataset = FracturedDataset(
         TEST_DIR, RESIZE_TO, RESIZE_TO, CLASSES, get_valid_transform())
-    test_rcnn_subset = FracturedDataset("path to images",
+    test_rcnn_subset = FracturedDataset("\\test_subset",
                                         RESIZE_TO, RESIZE_TO, CLASSES, get_valid_transform())
     train_rcnn_loader = DataLoader(
         train_rcnn_dataset,
@@ -459,7 +450,7 @@ def run():
                                          shuffle=False,
                                          num_workers=4,
                                          collate_fn=collate_fn)
-    TEST_IMG_DIR = "test images"
+    TEST_IMG_DIR = "test_images"
     test_images = glob.glob(f"{TEST_IMG_DIR}/*")
     print(f"Test instances: {len(test_images)}")
     # classes: 0 index is reserved for background
@@ -467,15 +458,27 @@ def run():
     # define the detection threshold...
     # ... any detection having score below this will be discarded
     detection_threshold = 0.75
-
+    torch.cuda.empty_cache()
     model = load_faster_rcnn_model(
         "models\\detection_model.pth")
     run_tests(model, test_images, detection_threshold=detection_threshold)
-    #evaluate(model, test_rcnn_loader, DEVICE)
-    #get_iou_for_num_batch_in_loader(model, test_rcnn_subset_loader, .75)
-    #run_one_image(model,"C:\\Users\\jenni\\Desktop\\Diss_Work\\Faster_RCNN\\test_subset\\0001_1297860435_01_WRI-L2_M014.jpg", 0.75
-     #             ,[0,1,2,3,4,5,6,7,8,9,10,11] )
-    #run_metrics_loader(model,test_rcnn_subset_loader,0.75)
+    # evaluate(model, test_rcnn_loader, DEVICE)
+    print("0%")
+    get_iou_for_num_batch_in_loader(model, valid_rcnn_loader, 0.0)
+    print("25%")
+    get_iou_for_num_batch_in_loader(model, valid_rcnn_loader, 0.25)
+    print("50%")
+    get_iou_for_num_batch_in_loader(model, valid_rcnn_loader, 0.50)
+    print("75%")
+    get_iou_for_num_batch_in_loader(model, valid_rcnn_loader, 0.75)
+    print("90%")
+    get_iou_for_num_batch_in_loader(model, valid_rcnn_loader, 0.90)
+    print("95%")
+    get_iou_for_num_batch_in_loader(model, valid_rcnn_loader, 0.95)
+    run_one_image(model, "test_subset\\0001_1297860435_01_WRI-L2_M014.jpg",
+                  0.75, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+    run_metrics_loader(model, test_rcnn_subset_loader, 0.75)
+
 
 def main():
     print(DEVICE)

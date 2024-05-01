@@ -1,3 +1,4 @@
+import ssl
 import os
 import shutil
 
@@ -5,7 +6,7 @@ import cv2
 import dicom2jpg
 import torch
 # from flask import *
-from flask import Flask, render_template, request,redirect
+from flask import Flask, render_template, request, redirect
 from PIL import Image
 from torchvision.transforms import v2
 
@@ -21,14 +22,14 @@ DETECTION_MODEL = None
 CLASSIFCATION_MODEL = None
 ALLOWED_EXTENSIONS = {'dcm', 'jpg', 'jpeg', 'png', 'dicom'}
 TEMP_UPLOAD_FOLDER = Path('static/inputs')
-CLASSIFICATION_TRANSFORMS = v2.Compose( 
+CLASSIFICATION_TRANSFORMS = v2.Compose(
     [AdjustImage(), v2.Resize([256, 256]), v2.PILToTensor()])
 DEVICE = torch.device(
     'cuda') if torch.cuda.is_available() else torch.device('cpu')
 app.config['UPLOAD_FOLDER'] = TEMP_UPLOAD_FOLDER
-import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
+
 
 def setup():
     if os.path.exists(str(Path("static/inputs/uploadedFileClassification.jpg"))):
@@ -43,8 +44,8 @@ def setup():
             and os.path.isfile(str(Path("models/classification_model.pth")))):
         try:
             global DETECTION_MODEL
-            DETECTION_MODEL = load_faster_rcnn_model( str(Path("models/detection_model.pth"))
-               )
+            DETECTION_MODEL = load_faster_rcnn_model(str(Path("models/detection_model.pth"))
+                                                     )
         except Exception as e:
             print("Error loading Detection Model.")
             print(e)
@@ -71,16 +72,22 @@ def main():
 def landing_page():
     return redirect("/home")
 
+
 @app.route("/home")
 def home():
     return render_template("home.html")
 
+
 @app.route("/about")
 def about():
     return render_template("about.html")
+
+
 @app.route("/documentation")
 def documentation():
     return render_template("documentation.html")
+
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -182,7 +189,7 @@ def detect():
                     img_array = cv2.imread(os.path.join(
                         app.config['UPLOAD_FOLDER'], "uploadedFileDetection.png"))
                     cv2.imwrite(os.path.join(app.config['UPLOAD_FOLDER'],
-                                            "uploadedFileDetection.jpg"), img_array,
+                                             "uploadedFileDetection.jpg"), img_array,
                                 [int(cv2.IMWRITE_JPEG_QUALITY), 100])
                     os.remove(os.path.join(
                         app.config['UPLOAD_FOLDER'], "uploadedFileDetection.png"))
@@ -198,9 +205,12 @@ def detect():
         return render_template("fractect.html", detection_results_labels=detection_results_labels,
                                detection_results_scores=detection_results_scores)
 
+
 @app.route('/error')
 def error():
     return render_template("error.html")
+
+
 def get_categories(form):
     categories = []
     if form.get("boneanomaly") is not None:

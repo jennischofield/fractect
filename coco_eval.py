@@ -36,6 +36,7 @@ class CocoEvaluator:
             coco_eval = self.coco_eval[iou_type]
 
             coco_eval.cocoDt = coco_dt
+            #coco_eval.params.catIds = [1]
             coco_eval.params.imgIds = list(img_ids)
             img_ids, eval_imgs = evaluate(coco_eval)
 

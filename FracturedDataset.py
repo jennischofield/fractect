@@ -23,7 +23,7 @@ class FracturedDataset(torch.utils.data.Dataset):
         self.all_images = sorted(self.all_images)
 
     def __getitem__(self, idx):
-        # capture the image name and the full image path      
+        # capture the image name and the full image path
 
         image_name = self.all_images[idx]
         image_path = os.path.join(self.dir_path, image_name)
