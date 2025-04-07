@@ -1,28 +1,43 @@
 # fractect
-A few things before you try to run the project - I don't know the status of your machine, so we're going to download all the necessary bits and bobs beforehand. We'll be downloading things into a virtual environment (venv) so you can delete it easily after testing!
+FracTect is a system that combines a classification model (ResNeXt) with a detection model (Faster R-CNN) to classify distal radius (wrist) fractures as Fractured or Not Fractured with degrees of confidence, as well as detect objects of interest in an X-ray.
 
-1) Open up a terminal (Terminal for both Windows and Mac. If you're using Linux, then you can convert your own commands, you have to have command line experience for that)
-2) Make sure you have python3 downloaded, if this doesn't work, go download it online, then verify: python --version
-3) Create a virtual environment: python -m venv tester-pack
-4) Confirm that the virtual environment was created successfully and activate it: 
-	Windows: tester-pack\Scripts\activate    MacOS/Unix: source tester-pack/bin/activate
-5) Now we have our venv, we need to download all the necessary packages for this to work. We'll be using pip to do so, but if you're on it, you can use conda, or whatever package manager you'd like, just adjust the commands as you'd like. Verify that pip is installed by:
-	Windows: py -m ensurepip --upgrade       MacOS/Unix: python -m ensurepip --upgrade
+The system runs locally using the Flask framework, and it'll be accessible on localhost after setting it up. 
 
-6) Install dicom2jpg: pip install dicom2jpg
+### Classification Model
 
-7) Install flask: pip install flask
+The classification model will take an X-ray input and then classify it into Fractured or Not Fractured but will give its degree of confidence based on pre-defined thresholds.
 
-8) Install albumetations: pip install albumentations
+|Prediction Confidence | Description |
+|:----------------------:|:-------------:|
+| >=85%                |Fractured/Not Fractured|
+| >=65%, <85%          | More Likely Fractured/Not Fractured|
+| <65%                 | Unsure|
 
-9) Install torchmetrics: pip install torchmetrics
+It will also generate a Grad-CAM heatmap based on where it is activated.
 
-10) Install tqdm: pip install tqdm
+Example output:
 
-11) Install torchvision: pip install torchvision
+![Grad-CAM classification example](https://github.com/jennischofield/fractect/blob/main/readme_images/Grad-CAM_Example.jpg?raw=true)
 
-12) Install matplotlib: pip install matplotlib
+### Detection Model
 
-13) This should be all the requirements now. Navigate to the folder containing the code. Example: To get to Downloads, do cd Downloads. Repeat until you're at the tester-package folder.
+The detection model also takes in an X-ray, as well as the user's detection threshold (how confident the model must be to display the bounding box) and which objects they'd like to see. The model expects fractured X-rays (and was exclusively trained on them), but has decent performance on not fractured X-rays as well. There are nine possible object types - Fracture, Metal, Periosteal Reaction, Pronator Sign, Soft Tissue, Text, Bone Anomalies, Bone Lesions, and Foreign Bodies. However, due to the dataset being focused on bone fractures (and therefore, the training data has underrepresented classes), the performance is best on commonly seen objects (Fracture, Metal, and Text). Full statistics on performance can be seen in the associated write-up. The detection model will produce an image with bounding boxes around objects of interest and with a confidence percentage next to each bounding box.
 
-14) Try spinning up the server by running: python -m flask --app fractect run
+Example output: 
+
+![Detection example](https://github.com/jennischofield/fractect/blob/main/readme_images/Detection_Example.jpg?raw=true)
+
+### UI
+
+The UI runs locally and includes documentation, links to this repo, contact details, and the interface itself. More details about the UI can be found in the write-up.
+
+Example of FracTect Tab:
+
+![UI example](https://github.com/jennischofield/fractect/blob/main/readme_images/UI_Example.png?raw=true)
+
+### Setting Up
+This repo includes all development work along the way, but to use FracTect, a tester package has been made, but due to the limitations of GitHub storage, the model files can't be uploaded. If you want access to the tester package, please reach out at schofieldjenni@gmail.com, and I'll get it to you. However, the instructions to start it up can be found at Fractect_tester_pack_instructions.txt in this repo, but the model files would still need to be sent directly to you. 
+
+The formal writeup for FracTect can also be found in this repo, under FracTect_Writeup.pdf.
+
+If there are any questions, feel free to contact me at schofieldjenni@gmail.com
